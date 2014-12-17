@@ -250,6 +250,7 @@ if (response == 'y') or (response == 'yes'):
 	response = raw_input("Continue [Y/n]: ").lower()
 	if (response == 'n') or (response == 'no'):
 		sys.exit()
+print
 
 cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
 # If you want different sources you must edit the above SQL query
@@ -285,7 +286,7 @@ for i in range(cur.rowcount):
     ddef = row["htmlRep"]
     dsrc = row["source"]
     
-    sys.stdout.write("\rExporting %s of %s" % (i,cur.rowcount))
+    sys.stdout.write("\rExporting %s of %s..." % (i,cur.rowcount))
     printTerm(dterm,ddef,dsrc)
 
 
@@ -312,13 +313,13 @@ for i in range(0,(lineno/10000)+1):
 to.write(OPFTEMPLATEEND)
 
 to.close()
-raw_input("\nJob finished, file %s.OPF was generated.\nPress any key..." % name)
+raw_input("\nJob finished, file ""%s.opf"" was generated.\nPress any key..." % name)
 
 #with open("/dev/null","w") as null:
-#	try:
-#		call(['kindlegen','-c2','-o',mobi_filename,opf_filename])
-#	except OSError, e:
-#		if e.errno == errno.ENOENT:
-#			print "Warning: kindlegen was not on your path; not generating .mobi version"
-#		else:
-#			raise
+try:
+	call(['kindlegen','-c2','-o',name + '.opf'])
+except OSError, e:
+	if e.errno == errno.ENOENT:
+		print "Warning: kindlegen was not on your path; not generating .mobi version"
+	else:
+		raise
