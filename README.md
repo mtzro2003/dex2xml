@@ -22,7 +22,7 @@ TO DO:
 		- optimize SQL queries
 		- ....
 
-This python script is based on tab2opf.py by Klokan Petr Pøidal (www.klokan.cz)
+This python script is based on tab2opf.py by Klokan Petr PÃ¸idal (www.klokan.cz)
 
 Requirements:
 		Linux or Wine/Windows enivronment (Windows is needed for mobigen.exe)
@@ -41,7 +41,7 @@ Version history:
 0.2		(16.12.2014) dex2xml.py - mtz_ro_2003@yahoo.com
 			initial dex2xml.py version
 
-0.1		(19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
+0.1		(19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr PÃ¸idal (www.klokan.cz)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
