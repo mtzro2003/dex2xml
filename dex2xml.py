@@ -317,9 +317,9 @@ raw_input("\nJob finished, file ""%s.opf"" was generated.\nPress any key..." % n
 
 #with open("/dev/null","w") as null:
 try:
-	call(['kindlegen','-c2','-o',name + '.opf'])
+	call(['kindlegen',name + '.opf','-c2'])
 except OSError, e:
 	if e.errno == errno.ENOENT:
-		print "Warning: kindlegen was not on your path; not generating .mobi version"
+		print "WARNING!!! Kindlegen was not on your path; not generating .MOBI version..."
 	else:
 		raise
