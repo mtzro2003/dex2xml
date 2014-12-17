@@ -88,6 +88,7 @@ def replacewithcedilla(termen):
 		termen = termen.replace(couple[0],couple[1])
 	return termen
 
+
 def iswithcomma(termen):
 	chars = set(u"\u0218\u0219\u021A\u021B")
 	if any((c in chars) for c in termen):
@@ -97,19 +98,19 @@ def iswithcomma(termen):
 
 
 def printInflection(termen):
-
 	to.write("""
                     <idx:iform value="%s"/>""" % termen)
 
-def Inflections(termen):
-	to.write("""
-              <idx:infl>""")
-	if iswithcomma(termen):
-		printInflection(replacewithcedilla(termen)) #if the term contains comma it will add the term with cedilla as an inflected form
 
+def Inflections(termen):
+	infl_header = False
+	
 	cur2.execute("SELECT distinct formUtf8General FROM FullTextIndex fti join Definition d on d.id = fti.definitionId join InflectedForm inf on inf.lexemModelId = fti.lexemModelId where fti.position = 0 and d.lexicon = '%s'" % (termen))
 	
 	if cur2.rowcount>0:
+		infl_header = True
+		to.write("""
+              <idx:infl>""")
 		for i in range(cur2.rowcount):
 			inf = cur2.fetchone()
 			inflection = inf["formUtf8General"]
@@ -117,9 +118,16 @@ def Inflections(termen):
 				printInflection(inflection)
 				if iswithcomma(inflection): # if the inflected form contains comma it will export the same form written with cedilla
 					printInflection(replacewithcedilla(inflection))
-	to.write("""
+	if iswithcomma(termen):
+		infl_header = True
+		to.write("""
+              <idx:infl>""")
+		printInflection(replacewithcedilla(termen)) #if the term contains comma it will add the term with cedilla as an inflected form
+	if infl_header:
+		to.write("""
               </idx:infl>""")
-	
+
+
 def printTerm(termen,definition,source):
 	to.write("""      <idx:entry name="word" scriptable="yes">
         <h2>
@@ -206,7 +214,6 @@ print("Using '%s'" % mysql_db)
 
 try:
 	conn = pymysql.connect(host=mysql_server, port=mysql_port, user=mysql_user, passwd=mysql_passwd, db=mysql_db,charset='utf8')
-#except:
 except pymysql.OperationalError as e:
 	print('\nGot error {!r}, errno is {}'.format(e, e.args[0]))
 	print("\nCould not connect to MySQL server using the parameters you entered.\nPlease make sure that the server is running and try again...")
@@ -253,7 +260,7 @@ if (response == 'y') or (response == 'yes'):
 print
 
 cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
-# If you want different sources you must edit the above SQL query
+
 i = 0
 to = codecs.open("%s%d.html" % (name, i / 10000),"w","utf-8")
 
@@ -313,11 +320,16 @@ for i in range(0,(lineno/10000)+1):
 to.write(OPFTEMPLATEEND)
 
 to.close()
-raw_input("\nJob finished, file ""%s.opf"" was generated.\nPress any key..." % name)
 
-#with open("/dev/null","w") as null:
 try:
+	print("Trying to call kindlegen to generate .MOBI format...")
 	call(['kindlegen',name + '.opf','-c2'])
+	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
+	if (response == 'y') or (response == 'yes'):
+		os.remove(name + '*.html')
+		os.remove(name + '.opf')
+		print("Done removing files")
+	raw_input("Press any key to exit...")
 except OSError, e:
 	if e.errno == errno.ENOENT:
 		print "WARNING!!! Kindlegen was not on your path; not generating .MOBI version..."
