@@ -59,10 +59,3 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 
 
-Files included:
-
-	cover.jpg	-- book cover with dexonline.ro logo
-	dex2xml.py	-- script to export DEXonline database to XML format
-	mobigen.exe	-- program for converting OPF file to MOBI (available from http://www.mobipocket.com/soft/prcgen/mobigen.zip)
-	UnxUtils.zip	-- collection of Unix utilities compiled for MS WIndows (available from http://unxutils.sourceforge.net/)
-			-- contains wget.exe and zcat.exe useful for downloading and installing DEXonline database in MySql for Windows
