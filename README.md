@@ -1,16 +1,10 @@
 
 
-Python script to convert DEXonline database to xml format for creating a MOBI dictionary
+Python script to convert DEXonline database to xml format for creating a MOBI dictionary.
 Due to Kindle fonts, the diacritics for Romanian language are not displayed properly
 (Romanian standard defines diacritics as letters with comma (,) and Kindle displays these with cedilla)
 Due to this problem, searching for terms containing diacritics with comma would not return any result.
-This was overcome by exporting terms and inflected forms both with comma and with cedilla
-
-
-This script exports a number of HTML files and one OPF
-The OPF file can be converted to MOBI using "mobigen.exe <file>.opf"
-mobigen.exe available at:
-  http://www.mobipocket.com/soft/prcgen/mobigen.zip
+This was overcome by exporting terms and inflected forms both with comma and with cedilla.
 
 Tested with Kindle Paperwhite 2013
 
@@ -18,9 +12,9 @@ BUGS:
 		..... 
 
 TO DO:
-		- usage help
-		- optimize SQL queries
-		- ....
+	- usage help
+	- optimize SQL queries
+	- ....
 
 This python script is based on tab2opf.py by Klokan Petr Pøidal (www.klokan.cz)
 
@@ -36,17 +30,17 @@ Requirements:
 Version history:
 
 0.2.2	(17.12.2014) dex2xml.py
-			various bugfixes and improvements
-			added posibility to directly run 'kindlegen' to convert the OPF to MOBI
+		various bugfixes and improvements
+		added posibility to directly run 'kindlegen' to convert the OPF to MOBI
 
 0.2.1	(17.12.2014) dex2xmls.py - mtz_ro_2003
-			added parameters for connecting to MySql server
-			added posibility to chose the dictionary sources
+		added parameters for connecting to MySql server
+		added posibility to chose the dictionary sources
 
-0.2		(16.12.2014) dex2xml.py - mtz_ro_2003
-			initial dex2xml.py version
+0.2	(16.12.2014) dex2xml.py - mtz_ro_2003
+		initial dex2xml.py version
 
-0.1		(19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
+0.1	(19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
