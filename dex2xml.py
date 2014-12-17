@@ -39,7 +39,7 @@
 #
 # 0.2.1	(17.12.2014) dex2xmls.py - mtz_ro_2003@yahoo.com
 #			added parameters for connecting to MySql server
-#			added posibility to chose the dictionary sources
+#			added posibility to choose the dictionary sources
 #
 # 0.2		(16.12.2014) dex2xml.py - mtz_ro_2003@yahoo.com
 #			initial dex2xml.py version
@@ -75,6 +75,7 @@ from exceptions import UnicodeEncodeError
 import pymysql
 import codecs
 import getpass
+from subprocess import call
 
 def replacewithcedilla(termen):
 	findreplace = [
@@ -96,29 +97,34 @@ def iswithcomma(termen):
 
 
 def printInflection(termen):
+
+	to.write("""
+                    <idx:iform value="%s"/>""" % termen)
+
+def Inflections(termen):
+	to.write("""
+              <idx:infl>""")
+	if iswithcomma(termen):
+		printInflection(replacewithcedilla(termen)) #if the term contains comma it will add the term with cedilla as an inflected form
+
 	cur2.execute("SELECT distinct formUtf8General FROM FullTextIndex fti join Definition d on d.id = fti.definitionId join InflectedForm inf on inf.lexemModelId = fti.lexemModelId where fti.position = 0 and d.lexicon = '%s'" % (termen))
 	
 	if cur2.rowcount>0:
-		to.write("""
-	            <idx:infl>""")
 		for i in range(cur2.rowcount):
 			inf = cur2.fetchone()
 			inflection = inf["formUtf8General"]
 			if inflection:
-				to.write("""
-                    <idx:iform value="%s"/>""" % (inflection))
+				printInflection(inflection)
 				if iswithcomma(inflection): # if the inflected form contains comma it will export the same form written with cedilla
-					to.write("""
-                    <idx:iform value="%s"/>""" % (replacewithcedilla(inflection)))
-		to.write("""
-		          </idx:infl>""")
-	
+					printInflection(replacewithcedilla(inflection))
+	to.write("""
+              </idx:infl>""")
 	
 def printTerm(termen,definition,source):
 	to.write("""      <idx:entry name="word" scriptable="yes">
         <h2>
           <idx:orth>%s""" % (termen))
-	printInflection(termen)
+	Inflections(termen)
 	to.write("""
             </idx:orth><idx:key key="%s">
         </h2>
@@ -129,21 +135,6 @@ def printTerm(termen,definition,source):
       <mbp:pagebreak/>
 """ % (termen, definition,source))
 
-	if iswithcomma(termen):	# if the term contains comma it will export again the same term (and inflected forms), but written with cedilla
-		termcedilla = replacewithcedilla(termen)
-		to.write("""      <idx:entry name="word" scriptable="yes">
-        <h2>
-          <idx:orth>%s""" % (termcedilla))
-		printInflection(termen)
-		to.write("""
-            </idx:orth><idx:key key="%s">
-        </h2>
-        %s
-        <br><br>
-        <b>Sursa: <i>%s</i></b>
-      </idx:entry>
-      <mbp:pagebreak/>
-""" % (termcedilla, definition,source))
 
 OPFTEMPLATEHEAD1 = """<?xml version="1.0"?><!DOCTYPE package SYSTEM "oeb1.ent">
 
@@ -198,19 +189,19 @@ OPFTEMPLATEEND = """</spine>
 # MAIN
 ################################################################
 
-mysql_server = raw_input('\nEnter the name/ip of the MySQL server [default: %s]: ' % 'localhost') or 'localhost'
+mysql_server = raw_input('Enter the name/ip of the MySQL server [default: %s]: ' % 'localhost') or 'localhost'
 print("Using '%s'" % mysql_server)
 
-mysql_port = raw_input('\nEnter the port for the server [default: %s]: ' % 3306) or 3306
+mysql_port = raw_input('Enter the port for the server [default: %s]: ' % 3306) or 3306
 print("Using '%s'" % mysql_port)
 
-mysql_user = raw_input('\nEnter the username for the MySQL server [default: %s]: ' % 'root') or 'root'
+mysql_user = raw_input('Enter the username for the MySQL server [default: %s]: ' % 'root') or 'root'
 print("Using '%s'" % mysql_user)
 
-mysql_passwd = getpass.getpass('\nEnter the password for the user %s: ' % mysql_user)
+mysql_passwd = getpass.getpass('Enter the password for the user %s: ' % mysql_user)
 print("Using '%s'" % ('*' * len(mysql_passwd)))
 
-mysql_db = raw_input('\nDEXonline database name [default: %s]: ' % 'DEX') or 'DEX'
+mysql_db = raw_input('DEXonline database name [default: %s]: ' % 'DEX') or 'DEX'
 print("Using '%s'" % mysql_db)
 
 try:
@@ -230,15 +221,15 @@ print("Using '%s'" % name)
 
 source_list = ["27","28","29","31","32","33","36"]
 
-cur.execute("select id,concat(name,' ',year) as source from source where id in (%s) order by id" % ','.join(source_list))
+cur.execute("select id,concat(name,' ',year) as source from Source where id in (%s) order by id" % ','.join(source_list))
 
 print("\nCurrent sources of dictionaries for export:\n")
 
 for i in range(cur.rowcount):
 	src = cur.fetchone()
-	print("%s\n" % src["source"].encode("utf-8"))
+	print("%s" % src["source"].encode("utf-8"))
 
-response = raw_input("Do you want to change the default sources list [y/N]: ").lower()
+response = raw_input("\nDo you want to change the default sources list [y/N]?: ").lower()
 if (response == 'y') or (response == 'yes'):
 	source_list = []
 	cur.execute("select id,concat(name,' ',year) as source from source order by id")
@@ -294,7 +285,7 @@ for i in range(cur.rowcount):
     ddef = row["htmlRep"]
     dsrc = row["source"]
     
-    print dterm.encode("utf-8")
+    sys.stdout.write("\rExporting %s of %s" % (i,cur.rowcount))
     printTerm(dterm,ddef,dsrc)
 
 
@@ -303,7 +294,7 @@ to.write("""
   </body>
 </html>
 """)
-print("\nTotal of %i definitions" % (i+1))
+
 to.close()
 cur.close()
 cur2.close()
@@ -322,3 +313,12 @@ to.write(OPFTEMPLATEEND)
 
 to.close()
 raw_input("\nJob finished, file %s.OPF was generated.\nPress any key..." % name)
+
+#with open("/dev/null","w") as null:
+#	try:
+#		call(['kindlegen','-c2','-o',mobi_filename,opf_filename])
+#	except OSError, e:
+#		if e.errno == errno.ENOENT:
+#			print "Warning: kindlegen was not on your path; not generating .mobi version"
+#		else:
+#			raise
