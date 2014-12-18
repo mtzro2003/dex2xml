@@ -8,14 +8,6 @@ This was overcome by exporting terms and inflected forms both with comma and wit
 
 Tested with Kindle Paperwhite 2013
 
-BUGS:
-        ..... 
-
-TO DO:
-    - usage help
-    - optimize SQL queries
-    - ....
-
 This python script is based on tab2opf.py by Klokan Petr Pøidal (www.klokan.cz)
 
 Requirements:
@@ -29,15 +21,15 @@ Requirements:
 
 Version history:
 
-0.2.2    (17.12.2014) dex2xml.py
+0.2.2    (18.12.2014) dex2xml.py
         various bugfixes and improvements
         added posibility to directly run 'kindlegen' to convert the OPF to MOBI
 
-0.2.1    (17.12.2014) dex2xmls.py - mtz_ro_2003
+0.2.1    (17.12.2014) dex2xmls.py
         added parameters for connecting to MySql server
         added posibility to chose the dictionary sources
 
-0.2    (16.12.2014) dex2xml.py - mtz_ro_2003
+0.2    (16.12.2014) dex2xml.py
         initial dex2xml.py version
 
 0.1    (19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)

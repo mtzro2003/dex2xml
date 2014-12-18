@@ -1,73 +1,57 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#       ******** WORK IN PROGESS!!! ********
-#
-# Python script to convert DEXonline database to xml format for creating a MOBI dictionary
+# Python script to convert DEXonline database to xml format for creating a MOBI dictionary.
 # Due to Kindle fonts, the diacritics for Romanian language are not displayed properly
 # (Romanian standard defines diacritics as letters with comma (,) and Kindle displays these with cedilla)
 # Due to this problem, searching for terms containing diacritics with comma would not return any result.
-# This was overcome by exporting terms and inflected forms both with comma and with cedilla
-#
-#
-# This script exports a number of HTML files and one OPF
-# The OPF file can be converted to MOBI using "mobigen.exe <file>.opf"
-# mobigen.exe available at:
-#   http://www.mobipocket.com/soft/prcgen/mobigen.zip
-#
+# This was overcome by exporting terms and inflected forms both with comma and with cedilla.
+# 
 # Tested with Kindle Paperwhite 2013
-#
-# BUGS:
-# 		..... 
-#
-# TO DO:
-# 		- usage help
-# 		- optimize SQL queries
-# 		- ....
-#
-# This python script is based on tab2opf.py by Klokan Petr Přidal (www.klokan.cz)
-#
+# 
+# This python script is based on tab2opf.py by Klokan Petr Pøidal (www.klokan.cz)
+# 
 # Requirements:
-#		Linux or Wine/Windows enivronment (Windows is needed for mobigen.exe)
-#		MySQL server
-#		copy of DEXonline database - download and installation instructions: http://wiki.dexonline.ro/wiki/Instruc%C8%9Biuni_de_instalare
-#		Python (this script was created and tested using Python 2.7)
-#		PyMySql package (compiled from sources or installed using "pip install pymysql")
-#	optional:
-#		kindlegen for generating MOBI format (available for Linux/Windows/Mac at http://www.amazon.com/gp/feature.html?docId=1000765211)
-#
+#         Linux or Windows enivronment
+#         MySQL server
+#         copy of DEXonline database - download and installation instructions: http://wiki.dexonline.ro/wiki/Instruc%C8%9Biuni_de_instalare
+#         Python (this script was created and tested using Python 2.7)
+#         PyMySql package (compiled from sources or installed using "pip install pymysql")
+#     optional:
+#         kindlegen for generating MOBI format (available for Linux/Windows/Mac at http://www.amazon.com/gp/feature.html?docId=1000765211)
+# 
 # Version history:
-#
-# 0.2.2	(17.12.2014) dex2xml.py
-#		various bugfixes and improvements
-#		added posibility to directly run 'kindlegen' to convert the OPF to MOBI
-#
-# 0.2.1	(17.12.2014) dex2xmls.py - mtz_ro_2003
-#		added parameters for connecting to MySql server
-#		added posibility to choose the dictionary sources
-#
-# 0.2	(16.12.2014) dex2xml.py - mtz_ro_2003@yahoo.com
-#		initial dex2xml.py version
-#
-# 0.1	(19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Přidal (www.klokan.cz)
-#
+# 
+# 0.2.2    (18.12.2014) dex2xml.py
+#         various bugfixes and improvements
+#         added posibility to directly run 'kindlegen' to convert the OPF to MOBI
+# 
+# 0.2.1    (17.12.2014) dex2xmls.py
+#         added parameters for connecting to MySql server
+#         added posibility to chose the dictionary sources
+# 
+# 0.2    (16.12.2014) dex2xml.py
+#         initial dex2xml.py version
+# 
+# 0.1    (19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
+# 
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-#
+# 
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Library General Public License for more details.
-#
+# 
 # You should have received a copy of the GNU Library General Public
 # License along with this library; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 # Boston, MA 02111-1307, USA.
 
 # VERSION
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 import sys
 import re
@@ -83,7 +67,9 @@ from exceptions import UnicodeEncodeError
 import pymysql
 import codecs
 import getpass
-from subprocess import call
+import subprocess
+
+source_list = ["27","28","29","31","32","33","36"]
 
 def replacewithcedilla(termen):
 	findreplace = [
@@ -113,7 +99,7 @@ def printInflection(termen):
 def Inflections(termen):
 	infl_header = False
 	
-	cur2.execute("SELECT distinct formUtf8General FROM FullTextIndex fti join Definition d on d.id = fti.definitionId join InflectedForm inf on inf.lexemModelId = fti.lexemModelId where fti.position = 0 and d.lexicon = '%s'" % (termen))
+	cur2.execute("SELECT distinct formUtf8General FROM FullTextIndex fti join Definition d on d.id = fti.definitionId join InflectedForm inf on inf.lexemModelId = fti.lexemModelId where fti.position = 0 and d.id in (%s) and d.lexicon = '%s'" % (','.join(source_list),termen))
 	
 	if cur2.rowcount>0:
 		infl_header = True
@@ -234,8 +220,6 @@ cur2 = conn.cursor(pymysql.cursors.DictCursor)
 name = raw_input("\nEnter the filename of the generated dictionary file.\nExisting files will be overwritten.\nMay include path [default: '%s']: " % "DEXonline 2014") or "DEXonline 2014"
 print("Using '%s'" % name)
 
-source_list = ["27","28","29","31","32","33","36"]
-
 cur.execute("select id,concat(name,' ',year) as source from Source where id in (%s) order by id" % ','.join(source_list))
 
 print("\nCurrent sources of dictionaries for export:\n")
@@ -244,14 +228,14 @@ for i in range(cur.rowcount):
 	src = cur.fetchone()
 	print("%s" % src["source"].encode("utf-8"))
 
-response = raw_input("\nDo you want to change the default sources list [y/N]?: ").lower()
+response = raw_input("\nDo you want to change the default sources list ? [y/N]: ").lower()
 if (response == 'y') or (response == 'yes'):
 	source_list = []
 	cur.execute("select id,concat(name,' ',year) as source from source order by id")
 	print("Current source of definitions %s" % cur.rowcount)
 	for i in range(cur.rowcount):
 		src = cur.fetchone()
-		response = raw_input('\nUse as a source (%s of %s) %s [y/N]? ' % (i+1,cur.rowcount-1,src["source"].encode("utf-8"))).lower()
+		response = raw_input('\nUse as a source (%s of %s) %s ? [y/N]: ' % (i+1,cur.rowcount-1,src["source"].encode("utf-8"))).lower()
 		if (response == 'y') or (response == 'yes'):
 			source_list.append(str(src["id"]))
 	print source_list
@@ -269,7 +253,7 @@ print
 
 start_time = time.time()
 
-cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon limit 500" % ','.join(source_list))
+cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
 
 i = 0
 to = codecs.open("%s%d.html" % (name, i / 10000),"w","utf-8")
@@ -333,21 +317,21 @@ to.write(OPFTEMPLATEEND)
 
 to.close()
 
-mobi_generated = False
 try:
-	print("\nTrying to call kindlegen to generate .MOBI format...")
-	start_time = time.time()
-	call(['kindlegen',name + '.opf']) #,'-c2'
-	end_time = time.time()
-	mobi_generated = True
+	subprocess.call(['kindlegen'], stdout=subprocess.PIPE)
 except OSError, e:
 	if e.errno == errno.ENOENT:
-		print('WARNING!!! Kindlegen was not on your path; not generating .MOBI version...')
+		print('Kindlegen was not on your path; not generating .MOBI version...')
 		print('You can download kindlegen for Linux/Windows/Mac from http://www.amazon.com/gp/feature.html?docId=1000765211')
 		print('and then run: <kindlegen "%s.opf"> to convert the file to MOBI format.' % name)
 	else:
 		raise
-if mobi_generated:
+
+response = raw_input("\nKindlegen was found in your path.\nDo you want to launch it to convert the OPF to MOBI? [Y/n]: ") or 'y'
+if (response == 'y') or (response == 'yes'):
+	start_time = time.time()
+	subprocess.call(['kindlegen',name + '.opf','-verbose'])
+	end_time = time.time()
 	print("\nMOBI generated in %s seconds" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
 	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
 	if (response == 'y') or (response == 'yes'):
