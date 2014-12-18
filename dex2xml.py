@@ -72,6 +72,9 @@ VERSION = "0.2.1"
 import sys
 import re
 import os
+import time
+import errno
+import glob
 
 from unicodedata import normalize, decomposition, combining
 import string
@@ -228,7 +231,7 @@ except pymysql.OperationalError as e:
 cur = conn.cursor(pymysql.cursors.DictCursor)
 cur2 = conn.cursor(pymysql.cursors.DictCursor)
 
-name = raw_input("\nEnter the filename of the generated dictionary file.\nMay include path [default: '%s']: " % "DEXonline 2014") or "DEXonline 2014"
+name = raw_input("\nEnter the filename of the generated dictionary file.\nExisting files will be overwritten.\nMay include path [default: '%s']: " % "DEXonline 2014") or "DEXonline 2014"
 print("Using '%s'" % name)
 
 source_list = ["27","28","29","31","32","33","36"]
@@ -264,7 +267,9 @@ if (response == 'y') or (response == 'yes'):
 		sys.exit()
 print
 
-cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
+start_time = time.time()
+
+cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon limit 500" % ','.join(source_list))
 
 i = 0
 to = codecs.open("%s%d.html" % (name, i / 10000),"w","utf-8")
@@ -298,9 +303,11 @@ for i in range(cur.rowcount):
     ddef = row["htmlRep"]
     dsrc = row["source"]
     
-    sys.stdout.write("\rExporting %s of %s..." % (i,cur.rowcount))
+    sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
     printTerm(dterm,ddef,dsrc)
 
+end_time = time.time()
+print("\nExport time: %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
 
 to.write("""
     </mbp:frameset>
@@ -326,17 +333,27 @@ to.write(OPFTEMPLATEEND)
 
 to.close()
 
+mobi_generated = False
 try:
-	print("Trying to call kindlegen to generate .MOBI format...")
-	call(['kindlegen',name + '.opf','-c2'])
-	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
-	if (response == 'y') or (response == 'yes'):
-		os.remove(name + '*.html')
-		os.remove(name + '.opf')
-		print("Done removing files")
-	raw_input("Press any key to exit...")
+	print("\nTrying to call kindlegen to generate .MOBI format...")
+	start_time = time.time()
+	call(['kindlegen',name + '.opf']) #,'-c2'
+	end_time = time.time()
+	mobi_generated = True
 except OSError, e:
 	if e.errno == errno.ENOENT:
-		print "WARNING!!! Kindlegen was not on your path; not generating .MOBI version..."
+		print('WARNING!!! Kindlegen was not on your path; not generating .MOBI version...')
+		print('You can download kindlegen for Linux/Windows/Mac from http://www.amazon.com/gp/feature.html?docId=1000765211')
+		print('and then run: <kindlegen "%s.opf"> to convert the file to MOBI format.' % name)
 	else:
 		raise
+if mobi_generated:
+	print("\nMOBI generated in %s seconds" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
+	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
+	if (response == 'y') or (response == 'yes'):
+		for fl in glob.glob(name + '*.html'):
+			os.remove(fl)
+		os.remove(name + '.opf')
+		print("Done removing files.")
+
+raw_input("\nPress any key to exit...")
