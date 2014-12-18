@@ -332,7 +332,7 @@ if (response == 'y') or (response == 'yes'):
 	start_time = time.time()
 	subprocess.call(['kindlegen',name + '.opf','-verbose'])
 	end_time = time.time()
-	print("\nMOBI generated in %s seconds" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
+	print("\nMOBI generated in %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
 	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
 	if (response == 'y') or (response == 'yes'):
 		for fl in glob.glob(name + '*.html'):
