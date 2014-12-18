@@ -96,10 +96,10 @@ def printInflection(termen):
                     <idx:iform value="%s"/>""" % termen)
 
 
-def Inflections(termen):
+def Inflections(iddef,termen):
 	infl_header = False
 	
-	cur2.execute("SELECT distinct formUtf8General FROM FullTextIndex fti join Definition d on d.id = fti.definitionId join InflectedForm inf on inf.lexemModelId = fti.lexemModelId where fti.position = 0 and d.id in (%s) and d.lexicon = '%s'" % (','.join(source_list),termen))
+	cur2.execute("select distinct formUtf8General from Definition d join LexemDefinitionMap ldm on ldm.definitionid = d.id join LexemModel lm on lm.lexemid = ldm.lexemId join InflectedForm inf on inf.lexemModelId = lm.id where d.id = %s" % iddef)
 	
 	if cur2.rowcount>0:
 		infl_header = True
@@ -122,11 +122,11 @@ def Inflections(termen):
               </idx:infl>""")
 
 
-def printTerm(termen,definition,source):
+def printTerm(iddef,termen,definition,source):
 	to.write("""      <idx:entry name="word" scriptable="yes">
         <h2>
           <idx:orth>%s""" % (termen))
-	Inflections(termen)
+	Inflections(iddef,termen)
 	to.write("""
             </idx:orth><idx:key key="%s">
         </h2>
@@ -183,7 +183,7 @@ OPFTEMPLATELINEREF = """	<itemref idref="dictionary%d"/>
 OPFTEMPLATEEND = """</spine>
 
 <tours/>
-<guide> <reference type="search" title="Dictionary Search" onclick= "index_search()"/> </guide>
+<guide> <reference type="search" title="Dictionary Search"/> </guide>
 </package>
 """
 
@@ -253,24 +253,24 @@ print
 
 start_time = time.time()
 
-cur.execute("SELECT lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
+cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
 
 i = 0
 to = codecs.open("%s%d.html" % (name, i / 10000),"w","utf-8")
 
 for i in range(cur.rowcount):
-    row = cur.fetchone()
-    if i % 10000 == 0:
-        if to:
-            to.write("""
+	row = cur.fetchone()
+	if i % 10000 == 0:
+		if to:
+			to.write("""
                 </mbp:frameset>
               </body>
             </html>
             """)
-            to.close()
-        to = codecs.open("%s%d.html" % (name, i / 10000), "w","utf-8")
+			to.close()
+			to = codecs.open("%s%d.html" % (name, i / 10000), "w","utf-8")
 
-        to.write("""<?xml version="1.0" encoding="utf-8"?>
+			to.write("""<?xml version="1.0" encoding="utf-8"?>
 <html xmlns:idx="www.mobipocket.com" xmlns:mbp="www.mobipocket.com" xmlns:xlink="http://www.w3.org/1999/xlink">
   <body>
     <mbp:pagebreak/>
@@ -283,12 +283,13 @@ for i in range(cur.rowcount):
       <mbp:pagebreak/>
 """)
 
-    dterm = row["lexicon"]
-    ddef = row["htmlRep"]
-    dsrc = row["source"]
-    
-    sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
-    printTerm(dterm,ddef,dsrc)
+	did = row["id"]
+	dterm = row["lexicon"]
+	ddef = row["htmlRep"]
+	dsrc = row["source"]
+
+	sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
+	printTerm(did,dterm,ddef,dsrc)
 
 end_time = time.time()
 print("\nExport time: %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
@@ -309,10 +310,10 @@ to.write(OPFTEMPLATEHEAD1 % (name, name))
 to.write(OPFTEMPLATEHEADNOUTF)
 to.write(OPFTEMPLATEHEAD2)
 for i in range(0,(lineno/10000)+1):
-    to.write(OPFTEMPLATELINE % (i, name, i))
+	to.write(OPFTEMPLATELINE % (i, name, i))
 to.write(OPFTEMPLATEMIDDLE)
 for i in range(0,(lineno/10000)+1):
-    to.write(OPFTEMPLATELINEREF % i)
+	to.write(OPFTEMPLATELINEREF % i)
 to.write(OPFTEMPLATEEND)
 
 to.close()
