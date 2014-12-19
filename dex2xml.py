@@ -71,7 +71,101 @@ import subprocess
 
 source_list = ["27","28","29","31","32","33","36"]
 
-def replacewithcedilla(termen):
+OPFTEMPLATEHEAD = """<?xml version="1.0" encoding="utf-8"?>
+<package unique-identifier="uid">
+	<metadata>
+		<dc-metadata xmlns:dc="http://purl.org/metadata/dublin_core" xmlns:oebpackage="http://openebook.org/namespaces/oeb-package/1.0/">
+			<dc:Identifier id="uid">%s</dc:Identifier>
+			<!-- Title of the document -->
+			<dc:Title><h2>%s</h2></dc:Title>
+			<dc:Language>ro</dc:Language>
+			<dc:Creator>dex2xml</dc:Creator>
+			<dc:Description>DEX online</dc:Description>
+			<dc:Date>%s</dc:Date>
+	</dc-metadata>
+	<x-metadata>
+			<output encoding="utf-8" content-type="text/x-oeb1-document"></output>
+			<!-- That's how it's recognized as a dictionary: -->
+			<DictionaryInLanguage>ro</DictionaryInLanguage>
+			<DictionaryOutLanguage>ro</DictionaryOutLanguage>
+			<DefaultLookupIndex>word</DefaultLookupIndex>
+		</x-metadata>
+	</metadata>
+	<manifest>
+		<item id="toc" properties="nav" href="%s.xhtml" mediatype="application/xhtml+xml"/>
+		<item id="cimage" media-type="image/jpeg" href="cover.jpg" properties="cover-mage"/>
+		<!-- list of all the files needed to produce the .prc file -->
+"""
+
+OPFTEMPLATEMIDDLE = """	</manifest>
+	<spine>
+		<itemref idref="toc"/>
+		<!-- list of the html files in the correct order  -->"""
+
+OPFTEMPLATEEND = """	</spine>
+	<guide>
+	</guide>
+</package>
+"""
+
+TOCTEMPLATEHEAD = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en"
+	lang="ro">
+	<head>
+		<title>DEXonline - Table of Contens</title>
+	</head>
+	 <body>
+		<h1>DEXonline</h1>
+			<nav epub:type="toc" id="toc">
+				<h2>Table of Contents</h2>
+					<ol>"""
+
+TOCTEMPLATEEND = """
+					</ol>
+			</nav>
+	</body>
+</html>
+"""
+
+FRAMESETTEMPLATEHEAD = """<html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="http://www.kreutzfeldt.de/tl" xmlns:saxon="http://saxon.sf.net/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cx="http://www.kreutzfeldt.de/mmc/cx" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:mbp="http://www.kreutzfeldt.de/mmc/mbp" xmlns:mmc="http://www.kreutzfeldt.de/mmc/mmc" xmlns:idx="http://www.mobipocket.com/idx">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	</head>
+	<body>
+		<mbp:frameset>"""
+
+FRAMESETTEMPLATEEND = """
+		</mbp:frameset>
+	</body>
+</html>
+"""
+
+IDXTEMPLATEHEAD = """
+			<idx:entry name="word" scriptable="yes">
+				<h2>
+					<idx:orth>%s"""
+
+IDXTEMPLATEEND = """
+					 </idx:orth><idx:key key="%s">
+				</h2>
+				%s
+				<br><br>
+				<hr>
+				<h3><b>Sursa: <i>%s</i></b><h3>
+			</idx:entry>
+			<mbp:pagebreak/>"""
+
+IDXINFTEMPLATEHEAD = """
+						<idx:infl>"""
+
+IDXINFTEMPLATEEND = """
+						 </idx:infl>"""
+
+IDXINFVALUETEMPLATE = """
+								<idx:iform value="%s" exact="yes"/>"""
+
+def replaceWithCedilla(termen):
 	findreplace = [
 	(u"\u0218",u"\u015E"),
 	(u"\u0219",u"\u015F"),
@@ -83,7 +177,7 @@ def replacewithcedilla(termen):
 	return termen
 
 
-def iswithcomma(termen):
+def isWithComma(termen):
 	chars = set(u"\u0218\u0219\u021A\u021B")
 	if any((c in chars) for c in termen):
 		return True
@@ -92,8 +186,7 @@ def iswithcomma(termen):
 
 
 def printInflection(termen):
-	to.write("""
-                    <idx:iform value="%s"/>""" % termen)
+	to.write(IDXINFVALUETEMPLATE % termen)
 
 
 def Inflections(iddef,termen):
@@ -103,89 +196,40 @@ def Inflections(iddef,termen):
 	
 	if cur2.rowcount>0:
 		infl_header = True
-		to.write("""
-              <idx:infl>""")
+		to.write(IDXINFTEMPLATEHEAD)
 		for i in range(cur2.rowcount):
 			inf = cur2.fetchone()
 			inflection = inf["formUtf8General"]
 			if inflection:
 				printInflection(inflection)
-				if iswithcomma(inflection): # if the inflected form contains comma it will export the same form written with cedilla
-					printInflection(replacewithcedilla(inflection))
-	if iswithcomma(termen):
+				if isWithComma(inflection): # if the inflected form contains comma it will export the same form written with cedilla
+					printInflection(replaceWithCedilla(inflection))
+	if isWithComma(termen):
 		infl_header = True
-		to.write("""
-              <idx:infl>""")
-		printInflection(replacewithcedilla(termen)) #if the term contains comma it will add the term with cedilla as an inflected form
+		to.write(IDXINFTEMPLATEHEAD)
+		printInflection(replaceWithCedilla(termen)) #if the term contains comma it will add the term with cedilla as an inflected form
 	if infl_header:
-		to.write("""
-              </idx:infl>""")
-
+		to.write(IDXINFTEMPLATEEND)
 
 def printTerm(iddef,termen,definition,source):
-	to.write("""      <idx:entry name="word" scriptable="yes">
-        <h2>
-          <idx:orth>%s""" % (termen))
+	to.write(IDXTEMPLATEHEAD % (termen))
 	Inflections(iddef,termen)
-	to.write("""
-            </idx:orth><idx:key key="%s">
-        </h2>
-        %s
-        <br><br>
-        <b>Sursa: <i>%s</i></b>
-      </idx:entry>
-      <mbp:pagebreak/>
-""" % (termen, definition,source))
+	to.write(IDXTEMPLATEEND % (termen, definition,source))
 
+def deleteFile(filename):
+	try:
+			os.remove(filename)
+	except OSError as e:
+		if e.errno != errno.ENOENT:	# errno.ENOENT = no such file or directory
+			raise 										# re-raise exception if a different error occured
 
-OPFTEMPLATEHEAD1 = """<?xml version="1.0"?><!DOCTYPE package SYSTEM "oeb1.ent">
-
-<!-- the command line instruction 'prcgen dictionary.opf' will produce the dictionary.prc file in the same folder-->
-<!-- the command line instruction 'mobigen dictionary.opf' will produce the dictionary.mobi file in the same folder-->
-
-<package unique-identifier="uid" xmlns:dc="Dublin Core">
-
-<metadata>
-	<dc-metadata>
-		<dc:Identifier id="uid">%s</dc:Identifier>
-		<!-- Title of the document -->
-		<dc:Title><h2>%s</h2></dc:Title>
-		<dc:Language>RO</dc:Language>
-	</dc-metadata>
-	<x-metadata>
-"""
-OPFTEMPLATEHEADNOUTF = """		<output encoding="UTF-8" flatten-dynamic-dir="yes"/>"""
-OPFTEMPLATEHEAD2 = """
-		<DictionaryInLanguage>ro</DictionaryInLanguage>
-		<DictionaryOutLanguage>ro</DictionaryOutLanguage>
-		<meta name="cover" content="Coperta" />
-	</x-metadata>
-</metadata>
-
-<!-- list of all the files needed to produce the .prc file -->
-<manifest>
- <item href="cover.jpg" id="Coperta" media-type="image/jpeg" />
-"""
-
-OPFTEMPLATELINE = """ <item id="dictionary%d" href="%s%d.html" media-type="text/x-oeb1-document"/>
-"""
-
-OPFTEMPLATEMIDDLE = """</manifest>
-
-
-<!-- list of the html files in the correct order  -->
-<spine>
-"""
-
-OPFTEMPLATELINEREF = """	<itemref idref="dictionary%d"/>
-"""
-
-OPFTEMPLATEEND = """</spine>
-
-<tours/>
-<guide> <reference type="search" title="Dictionary Search"/> </guide>
-</package>
-"""
+def deleteFiles(filemask,mobi):
+	for fl in glob.glob(u'' + filemask + u'*.html'):
+		deleteFile(fl)
+	deleteFile(filemask + '_TOC.xhtml')
+	deleteFile(filemask + '.opf')
+	if mobi:
+		deleteFile(filemask + '.mobi')
 
 ################################################################
 # MAIN
@@ -217,8 +261,9 @@ except pymysql.OperationalError as e:
 cur = conn.cursor(pymysql.cursors.DictCursor)
 cur2 = conn.cursor(pymysql.cursors.DictCursor)
 
-name = raw_input("\nEnter the filename of the generated dictionary file.\nExisting files will be overwritten.\nMay include path [default: '%s']: " % "DEXonline 2014") or "DEXonline 2014"
+name = raw_input("\nEnter the filename of the generated dictionary file.\nExisting files will be deleted.\nMay include path [default: '%s']: " % "DEXonline") or "DEXonline"
 print("Using '%s'" % name)
+deleteFiles(name, mobi = True)
 
 cur.execute("select id,concat(name,' ',year) as source from Source where id in (%s) order by id" % ','.join(source_list))
 
@@ -238,7 +283,7 @@ if (response == 'y') or (response == 'yes'):
 		response = raw_input('\nUse as a source (%s of %s) %s ? [y/N]: ' % (i+1,cur.rowcount-1,src["source"].encode("utf-8"))).lower()
 		if (response == 'y') or (response == 'yes'):
 			source_list.append(str(src["id"]))
-	print source_list
+	print(source_list)
 	print("\nSelected sources of dictionaries for export:\n")
 	cur.execute("select id,concat(name,' ',year) as source from source where id in (%s) order by id" % ','.join(source_list))
 	for i in range(cur.rowcount):
@@ -255,67 +300,58 @@ start_time = time.time()
 
 cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
 
-i = 0
-to = codecs.open("%s%d.html" % (name, i / 10000),"w","utf-8")
+manifest = ''
+spine = ''
+letter = ''
+toc = ''
+to = False
 
 for i in range(cur.rowcount):
 	row = cur.fetchone()
-	if i % 10000 == 0:
-		if to:
-			to.write("""
-                </mbp:frameset>
-              </body>
-            </html>
-            """)
-			to.close()
-			to = codecs.open("%s%d.html" % (name, i / 10000), "w","utf-8")
-
-			to.write("""<?xml version="1.0" encoding="utf-8"?>
-<html xmlns:idx="www.mobipocket.com" xmlns:mbp="www.mobipocket.com" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <body>
-    <mbp:pagebreak/>
-    <mbp:frameset>
-      <mbp:slave-frame display="bottom" device="all" breadth="auto" leftmargin="0" rightmargin="0" bottommargin="0" topmargin="0">
-        <div align="center" bgcolor="yellow"/>
-        <a onclick="index_search()">Dictionary Search</a>
-        </div>
-      </mbp:slave-frame>
-      <mbp:pagebreak/>
-""")
 
 	did = row["id"]
 	dterm = row["lexicon"]
 	ddef = row["htmlRep"]
 	dsrc = row["source"]
-
+	
+	if letter != dterm[0].upper():
+		letter = dterm[0].upper()
+		if to:
+			to.write(FRAMESETTEMPLATEEND)
+			to.close()
+		filename = name + '_' + letter + '.html'
+		if os.path.isfile(filename):
+			to = codecs.open(filename, "a","utf-8")
+		else:
+			to = codecs.open(filename, "w","utf-8")
+			to.write(FRAMESETTEMPLATEHEAD)
+			manifest = manifest + '\t\t<item id="' + letter + '" href="' + to.name + '" media-type="text/x-oeb1-document"/>\n'
+			spine = spine + '\t\t<itemref idref="' + letter + '"/>\n'
+			toc = toc + '\n\t\t\t\t\t\t<li><a href="' + to.name + '">' + letter + '</a></li>'
 	sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
 	printTerm(did,dterm,ddef,dsrc)
 
 end_time = time.time()
 print("\nExport time: %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
 
-to.write("""
-    </mbp:frameset>
-  </body>
-</html>
-""")
+to.write(FRAMESETTEMPLATEEND)
 
 to.close()
 cur.close()
 cur2.close()
-lineno = i
 
-to = open("%s.opf" % name, 'w')
-to.write(OPFTEMPLATEHEAD1 % (name, name))
-to.write(OPFTEMPLATEHEADNOUTF)
-to.write(OPFTEMPLATEHEAD2)
-for i in range(0,(lineno/10000)+1):
-	to.write(OPFTEMPLATELINE % (i, name, i))
+to = codecs.open("%s.opf" % name, "w","utf-8")
+to.write(OPFTEMPLATEHEAD % (name, name, time.strftime("%d/%m/%Y"),name + '_TOC'))
+to.write(manifest)
 to.write(OPFTEMPLATEMIDDLE)
-for i in range(0,(lineno/10000)+1):
-	to.write(OPFTEMPLATELINEREF % i)
+to.write(spine)
 to.write(OPFTEMPLATEEND)
+to.close()
 
+to = codecs.open("%s_TOC.xhtml" % name, "w","utf-8")
+to.write(TOCTEMPLATEHEAD)
+to.write(toc)
+to.write(TOCTEMPLATEEND)
 to.close()
 
 try:
@@ -331,14 +367,15 @@ except OSError, e:
 response = raw_input("\nKindlegen was found in your path.\nDo you want to launch it to convert the OPF to MOBI? [Y/n]: ") or 'y'
 if (response == 'y') or (response == 'yes'):
 	start_time = time.time()
-	subprocess.call(['kindlegen',name + '.opf','-verbose'])
+	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source'])
 	end_time = time.time()
-	print("\nMOBI generated in %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
-	response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
-	if (response == 'y') or (response == 'yes'):
-		for fl in glob.glob(name + '*.html'):
-			os.remove(fl)
-		os.remove(name + '.opf')
-		print("Done removing files.")
+	if returncode < 0:
+		print("\nKindlegen failed with return code %s.\nTemporary files will not be deleted..." % returncode)
+	else:
+		print("\nKindlegen finished in %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
+		response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
+		if (response == 'y') or (response == 'yes'):
+			deleteFiles(name, mobi = False)
+			print("Done removing files.")
 
 raw_input("\nPress any key to exit...")

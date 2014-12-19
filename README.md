@@ -1,6 +1,8 @@
+DEX2XML
+=======
 
+dex2xml is aPython script to convert DEXonline database to xml format for creating a MOBI dictionary.
 
-Python script to convert DEXonline database to xml format for creating a MOBI dictionary.
 Due to Kindle fonts, the diacritics for Romanian language are not displayed properly
 (Romanian standard defines diacritics as letters with comma (,) and Kindle displays these with cedilla)
 Due to this problem, searching for terms containing diacritics with comma would not return any result.
@@ -11,16 +13,18 @@ Tested with Kindle Paperwhite 2013
 This python script is based on tab2opf.py by Klokan Petr Pøidal (www.klokan.cz)
 
 Requirements:
-        Linux or Windows enivronment
-        MySQL server
-        copy of DEXonline database - download and installation instructions: http://wiki.dexonline.ro/wiki/Instruc%C8%9Biuni_de_instalare
-        Python (this script was created and tested using Python 2.7)
-        PyMySql package (compiled from sources or installed using "pip install pymysql")
-    optional:
-        kindlegen for generating MOBI format (available for Linux/Windows/Mac at http://www.amazon.com/gp/feature.html?docId=1000765211)
+-------------
+* Linux or Windows enivronment
+* MySQL server
+* copy of DEXonline database - download and installation instructions: http://wiki.dexonline.ro/wiki/Instruc%C8%9Biuni_de_instalare
+* Python (this script was created and tested using Python 2.7)
+* PyMySql package (compiled from sources or installed using "pip install pymysql")
+
+optional:
+* kindlegen for generating MOBI format (available for Linux/Windows/Mac at http://www.amazon.com/gp/feature.html?docId=1000765211)
 
 Version history:
-
+----------------
 0.2.2    (18.12.2014) dex2xml.py
         various bugfixes and improvements
         added posibility to directly run 'kindlegen' to convert the OPF to MOBI
@@ -34,6 +38,8 @@ Version history:
 
 0.1    (19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
 
+License
+-------
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Library General Public
 License as published by the Free Software Foundation; either
