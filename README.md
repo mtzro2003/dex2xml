@@ -1,11 +1,6 @@
 DEX2XML
 =======
 
-
-.. image:: http://wiki.dexonline.ro/images/c/c9/Logo.png
-    :target: http://dexonline.ro
-
-
 dex2xml is aPython script to convert DEXonline database to xml format for creating a MOBI dictionary.
 
 Due to Kindle fonts, the diacritics for Romanian language are not displayed properly
