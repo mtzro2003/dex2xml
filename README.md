@@ -71,6 +71,9 @@ Usage:
 Version history:
 ----------------
     0.9.0
+        output file compiant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
+        added TOC
+        added abbreviation page
         added full interactive mode
         added full batch mode
         added usage help
@@ -81,7 +84,7 @@ Version history:
 
     0.2.1
         added parameters for connecting to MySql server
-        added posibility to chose the dictionary sources
+        added posibility to choose the dictionary sources
 
     0.2
         initial dex2xml.py version

@@ -29,6 +29,9 @@
 # Version history:
 # ----------------
 #     0.9.0
+#         output file compiant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
+#         added TOC
+#         added abbreviation page
 #         added full interactive mode
 #         added full batch mode
 #         added usage help
@@ -39,7 +42,7 @@
 # 
 #     0.2.1
 #         added parameters for connecting to MySql server
-#         added posibility to chose the dictionary sources
+#         added posibility to choose the dictionary sources
 # 
 #     0.2
 #         initial dex2xml.py version
@@ -387,6 +390,7 @@ def kindlegen():
 			print('Kindlegen was not on your path; not generating .MOBI version...')
 			print('You can download kindlegen for Linux/Windows/Mac from http://www.amazon.com/gp/feature.html?docId=1000765211')
 			print('and then run: <kindlegen "%s.opf"> to convert the file to MOBI format.' % name)
+			return
 		else:
 			raise
 	
@@ -485,11 +489,13 @@ batchgroup2 = parser.add_mutually_exclusive_group()
 batchgroup2.add_argument("-k","--kindlegen",help="Run kindlegen to convert the output to MOBI.\nDefault: set",action="store_false",default=True)
 batchgroup2.add_argument("-t","--temp_files",help="Delete the temporary files after running kindlegen.\nDefault: set",action="store_false",default=True)
 
-if not len(sys.argv) > 1:
-	print("To display help, run '%s -h'" % (sys.argv[0]))
-	sys.exit()
-
 args = parser.parse_args()
+
+if not len(sys.argv) > 1:
+	#print("To display help, run '%s -h'" % (sys.argv[0]))
+	#sys.exit()
+	print("\nNo parameters specified, running in 'interactive' mode.\nTo see the program usage run '%s -h'\n" % sys.argv[0])
+	args.interactive = True
 
 if args.interactive:
 	interactiveMode()
@@ -517,4 +523,4 @@ exportDictionaryFiles()
 kindlegen()
 
 if args.interactive:
-	raw_input("\nPress any key to exit...")
+	raw_input("\nPress <ENTER> to exit...")
