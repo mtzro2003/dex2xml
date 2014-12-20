@@ -38,9 +38,9 @@ Usage:
     -h, --help            print this help file
     -v, --version         print the program's version
     -k, --kindlegen       Run kindlegen to convert the output to MOBI.
-                          Default set
+                          Default: set
     -t, --temp_files      Delete the temporary files after running kindlegen.
-                          Default set
+                          Default: set
 
 
     Batch arguments:
@@ -57,14 +57,14 @@ Usage:
                         The password of the mysql server.
     -d DATABASE, --database DATABASE
                         DEX database on the mysql server.
-                        Default 'DEX'
+                        Default: 'DEX'
     -src SOURCES [SOURCES ...], --sources SOURCES [SOURCES ...]
                         List of dictionary sources to extract from database.
                         Must contain the sources id's from the table 'sources'.
                         Default: 27 28 29 31 32 33 36
     -o OUTPUTFILE, --outputfile OUTPUTFILE
                         Filename of output file.\May include path.\Existing files will be deleted first.
-                        Default 'DEXonline'
+                        Default: 'DEXonline'
 
 Version history:
 ----------------
