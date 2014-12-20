@@ -25,18 +25,24 @@ optional:
 
 Version history:
 ----------------
-0.2.2    (18.12.2014) dex2xml.py
+    0.9.0
+        added full interactive mode
+        added full batch mode
+        added usage help
+
+    0.2.2
         various bugfixes and improvements
         added posibility to directly run 'kindlegen' to convert the OPF to MOBI
 
-0.2.1    (17.12.2014) dex2xmls.py
+    0.2.1
         added parameters for connecting to MySql server
         added posibility to chose the dictionary sources
 
-0.2    (16.12.2014) dex2xml.py
+    0.2
         initial dex2xml.py version
 
-0.1    (19.07.2007) Initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
+    0.1
+        initial version of tab2opf.py - Copyright (C) 2007 - Klokan Petr Pøidal (www.klokan.cz)
 
 License
 -------
