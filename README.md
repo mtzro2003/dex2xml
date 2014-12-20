@@ -23,6 +23,49 @@ Requirements:
 optional:
 * kindlegen for generating MOBI format (available for Linux/Windows/Mac at http://www.amazon.com/gp/feature.html?docId=1000765211)
 
+Usage:
+------
+
+    dex2xml.py [-i | -b | -h | -v] [-s SERVER] [-p PORT] [-u USERNAME]
+                [-passwd PASSWORD] [-d DATABASE]
+                [-src SOURCES [SOURCES ...]] [-o OUTPUTFILE] [-k | -t]
+
+
+    optional arguments:
+
+    -i, --interactive     run the program in interactive mode
+    -b, --batch           run the program in batch mode, taking parameters from command line
+    -h, --help            print this help file
+    -v, --version         print the program's version
+    -k, --kindlegen       Run kindlegen to convert the output to MOBI.
+                          Default set
+    -t, --temp_files      Delete the temporary files after running kindlegen.
+                          Default set
+
+
+    Batch arguments:
+
+    -s SERVER, --server SERVER
+                        Specify the mysql server to connect to.
+                        Default: 'localhost'
+    -p PORT, --port PORT  Mysql server port.
+                        Default: 3306
+    -u USERNAME, --username USERNAME
+                        Specify the username to connect to mysql server.
+                        Default: 'root'
+    -passwd PASSWORD, --password PASSWORD
+                        The password of the mysql server.
+    -d DATABASE, --database DATABASE
+                        DEX database on the mysql server.
+                        Default 'DEX'
+    -src SOURCES [SOURCES ...], --sources SOURCES [SOURCES ...]
+                        List of dictionary sources to extract from database.
+                        Must contain the sources id's from the table 'sources'.
+                        Default: 27 28 29 31 32 33 36
+    -o OUTPUTFILE, --outputfile OUTPUTFILE
+                        Filename of output file.\May include path.\Existing files will be deleted first.
+                        Default 'DEXonline'
+
 Version history:
 ----------------
     0.9.0
