@@ -399,7 +399,7 @@ def exportDictionaryFiles():
 def runKindlegen():
 	start_time = time.time()
 #	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source','-c2'])
-	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source','-c2'])
+	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source'])
 	end_time = time.time()
 	if returncode < 0:
 		print("\nKindlegen failed with return code %s.\nTemporary files will not be deleted..." % returncode)
