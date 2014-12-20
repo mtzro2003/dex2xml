@@ -63,7 +63,9 @@ Usage:
                         Must contain the sources id's from the table 'sources'.
                         Default: 27 28 29 31 32 33 36
     -o OUTPUTFILE, --outputfile OUTPUTFILE
-                        Filename of output file.\May include path.\Existing files will be deleted first.
+                        Filename of output file.
+                        May include path.
+                        Existing files will be deleted first.
                         Default: 'DEXonline'
 
 Version history:
