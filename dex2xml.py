@@ -29,7 +29,7 @@
 # Version history:
 # ----------------
 #     0.9.0
-#         output file compiant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
+#         output file compliant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
 #         added TOC
 #         added abbreviation page
 #         added full interactive mode
@@ -89,6 +89,7 @@ import argparse
 from argparse import RawTextHelpFormatter
 
 source_list = ["27","28","29","31","32","33","36"]
+source_list_names = []
 
 mysql_server = ''
 mysql_port = ''
@@ -101,7 +102,7 @@ cur = ''
 cur2 = ''
 to = ''
 
-OPFTEMPLATEHEAD = """<?xml version="1.0" encoding="utf-8"?>
+OPFTEMPLATEHEAD = u"""<?xml version="1.0" encoding="utf-8"?>
 <package unique-identifier="uid">
 	<metadata>
 		<dc-metadata xmlns:dc="http://purl.org/metadata/dublin_core" xmlns:oebpackage="http://openebook.org/namespaces/oeb-package/1.0/">
@@ -124,26 +125,28 @@ OPFTEMPLATEHEAD = """<?xml version="1.0" encoding="utf-8"?>
 	<manifest>
 		<item id="cimage" media-type="image/jpeg" href="cover.jpg" properties="cover-image"/>
 		<item id="toc" properties="nav" href="%s.xhtml" mediatype="application/xhtml+xml"/>
+		<item id="stats" href="%s.html" mediatype="text/html"/>
 		<item id="abbr" href="Abrevieri.html" mediatype="text/html"/>
 		<!-- list of all the files needed to produce the .prc file -->
 """
 
-OPFTEMPLATEMIDDLE = """	</manifest>
+OPFTEMPLATEMIDDLE = u"""	</manifest>
 	<spine>
 		<itemref idref="cimage"/>
 		<itemref idref="toc"/>
+		<itemref idref="stats"/>
 		<itemref idref="abbr"/>
 		<!-- list of the html files in the correct order  -->
 """
 
-OPFTEMPLATEEND = """	</spine>
+OPFTEMPLATEEND = u"""	</spine>
 	<guide>
 		<reference type="toc" title="Table of Contents" href="%s.xhtml"/>
 	</guide>
 </package>
 """
 
-TOCTEMPLATEHEAD = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+TOCTEMPLATEHEAD = u"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="en"
 	lang="ro">
@@ -155,52 +158,72 @@ TOCTEMPLATEHEAD = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 		<hr>
 			<nav epub:type="toc" id="toc">
 					<ol>
+						<li><a href="%s.html">Statistici</a></li>
 						<li><a href="Abrevieri.html">Abrevieri</a></li>"""
 
-TOCTEMPLATEEND = """
+TOCTEMPLATEEND = u"""
 					</ol>
 			</nav>
 	</body>
 </html>
 """
 
-FRAMESETTEMPLATEHEAD = """<html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="http://www.kreutzfeldt.de/tl" xmlns:saxon="http://saxon.sf.net/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cx="http://www.kreutzfeldt.de/mmc/cx" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:mbp="http://www.kreutzfeldt.de/mmc/mbp" xmlns:mmc="http://www.kreutzfeldt.de/mmc/mmc" xmlns:idx="http://www.mobipocket.com/idx">
+FRAMESETTEMPLATEHEAD = u"""<html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="http://www.kreutzfeldt.de/tl" xmlns:saxon="http://saxon.sf.net/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cx="http://www.kreutzfeldt.de/mmc/cx" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:mbp="http://www.kreutzfeldt.de/mmc/mbp" xmlns:mmc="http://www.kreutzfeldt.de/mmc/mmc" xmlns:idx="http://www.mobipocket.com/idx">
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	</head>
 	<body>
 		<mbp:frameset>"""
 
-FRAMESETTEMPLATEEND = """
+FRAMESETTEMPLATEEND = u"""
 		</mbp:frameset>
 	</body>
 </html>
 """
 
-IDXTEMPLATEHEAD = """
+IDXTEMPLATEHEAD = u"""
 			<idx:entry name="word" scriptable="yes">
 				<h2>
 					<idx:orth>%s"""
 
-IDXTEMPLATEEND = """
+IDXTEMPLATEEND = u"""
 					 </idx:orth>
 				</h2>
 				%s
-				<br><br>
 				<hr>
-				<h6>Sursa: <i>%s</i></h6>
+				<sup>Sursa: <i>%s</i></sup>
 			</idx:entry>
 			<mbp:pagebreak/>"""
 
-IDXINFTEMPLATEHEAD = """
+IDXINFTEMPLATEHEAD = u"""
 						<idx:infl>"""
 
-IDXINFTEMPLATEEND = """
+IDXINFTEMPLATEEND = u"""
 						 </idx:infl>"""
 
-IDXINFVALUETEMPLATE = """
+IDXINFVALUETEMPLATE = u"""
 								<idx:iform value="%s" exact="yes" />"""
 
+STATSTEMPLATEHEAD = u"""<html xmlns:math="http://exslt.org/math" xmlns:svg="http://www.w3.org/2000/svg" xmlns:tl="http://www.kreutzfeldt.de/tl" xmlns:saxon="http://saxon.sf.net/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:cx="http://www.kreutzfeldt.de/mmc/cx" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:mbp="http://www.kreutzfeldt.de/mmc/mbp" xmlns:mmc="http://www.kreutzfeldt.de/mmc/mmc" xmlns:idx="http://www.mobipocket.com/idx">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Statistici - Dexonline</title>
+	</head>
+	<body>
+		<p><h4 style="text-align:center">Prezenta versiune conține %s definiții din următoarele surse:</h4></p>
+		<br>
+		<ul>
+"""
+
+STATSVALUETEMPLATE = u"""
+			<li><b>%s</b></li>"""
+
+STATSTEMPLATEEND = u"""
+		</ul>
+		<br>
+		<h4 style="text-align:center">Generat: %s</h4>
+	</body>
+</html>"""
 
 def replaceWithCedilla(termen):
 	findreplace = [
@@ -266,6 +289,7 @@ def deleteFiles(filemask,mobi):
 	for fl in glob.glob(u'' + filemask + u'*.html'):
 		deleteFile(fl)
 	deleteFile(filemask + '_TOC.xhtml')
+	deleteFile(filemask + '_STATS.html')
 	deleteFile(filemask + '.opf')
 	if mobi:
 		deleteFile(filemask + '.mobi')
@@ -352,11 +376,14 @@ def exportDictionaryFiles():
 	
 	if to:
 			to.close()
+
+	generateStats(name,cur.rowcount)
+
 	cur.close()
 	cur2.close()
 	
 	to = codecs.open("%s.opf" % name, "w","utf-8")
-	to.write(OPFTEMPLATEHEAD % (name, name, time.strftime("%d/%m/%Y"),name + '_TOC'))
+	to.write(OPFTEMPLATEHEAD % (name, name, time.strftime("%d/%m/%Y"),name + '_TOC',name + '_STATS'))
 	to.write(manifest)
 	to.write(OPFTEMPLATEMIDDLE)
 	to.write(spine)
@@ -364,7 +391,7 @@ def exportDictionaryFiles():
 	to.close()
 	
 	to = codecs.open("%s_TOC.xhtml" % name, "w","utf-8")
-	to.write(TOCTEMPLATEHEAD)
+	to.write(TOCTEMPLATEHEAD % (name + '_STATS'))
 	to.write(toc)
 	to.write(TOCTEMPLATEEND)
 	to.close()
@@ -372,7 +399,7 @@ def exportDictionaryFiles():
 def runKindlegen():
 	start_time = time.time()
 #	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source','-c2'])
-	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source'])
+	returncode = subprocess.call(['kindlegen',name + '.opf','-verbose','-dont_append_source','-c2'])
 	end_time = time.time()
 	if returncode < 0:
 		print("\nKindlegen failed with return code %s.\nTemporary files will not be deleted..." % returncode)
@@ -403,13 +430,29 @@ def kindlegen():
 def printSources():
 	global cur
 	global source_list
+	global source_list_names
 	
+	source_list_names = []
 	cur.execute("select id,concat(name,' ',year) as source from Source where id in (%s) order by id" % ','.join(source_list))
 	print("\nSources of dictionaries for export:\n")
-	
 	for i in range(cur.rowcount):
 		src = cur.fetchone()
-		print("%s" % src["source"].encode("utf-8"))
+		srcname = src["source"]
+		print("%s" % srcname.encode("utf-8"))
+		source_list_names.append(srcname)
+	print('\n')
+
+def generateStats(filemask,nrdef):
+	global source_list_names
+	
+	stats = codecs.open(filemask + "_STATS.html","w","utf-8")
+	stats.write(STATSTEMPLATEHEAD % nrdef)
+	
+	for src in source_list_names:
+		stats.write(STATSVALUETEMPLATE % src)
+	
+	stats.write(STATSTEMPLATEEND % time.strftime("%d/%m/%Y"))
+	stats.close
 
 def interactiveMode():
 	global mysql_server
@@ -443,7 +486,7 @@ def interactiveMode():
 	
 	printSources()
 	
-	response = raw_input("\nDo you want to change the default sources list ? [y/N]: ").lower()
+	response = raw_input("Do you want to change the default sources list ? [y/N]: ").lower()
 	if (response == 'y') or (response == 'yes'):
 		source_list = []
 		cur.execute("select id,concat(name,' ',year) as source from source order by id")
@@ -516,7 +559,8 @@ else:
 	print("\nSuccessfully connected to database '%s' on '%s:%d', using username '%s' and password '%s'..." % (mysql_db,mysql_server,mysql_port,mysql_user,'*' * len(mysql_passwd)))
 	if args.sources:
 		source_list = args.sources
-		printSources()
+	
+	printSources()
 
 deleteFiles(name, mobi = True)
 exportDictionaryFiles()

@@ -71,7 +71,7 @@ Usage:
 Version history:
 ----------------
     0.9.0
-        output file compiant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
+        output file compliant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
         added TOC
         added abbreviation page
         added full interactive mode
