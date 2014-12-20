@@ -477,13 +477,13 @@ batchgroup.add_argument("-s","--server",help="Specify the mysql server to connec
 batchgroup.add_argument("-p","--port",help="Mysql server port.\nDefault: 3306",type=int,default=3306)
 batchgroup.add_argument("-u","--username",help="Specify the username to connect to mysql server.\nDefault: 'root'",type=str,default="root")
 batchgroup.add_argument("-passwd","--password",help="The password of the mysql server.",type=str)
-batchgroup.add_argument("-d","--database",help="DEX database on the mysql server.\nDefault 'DEX'",type=str,default="DEX")
+batchgroup.add_argument("-d","--database",help="DEX database on the mysql server.\nDefault: 'DEX'",type=str,default="DEX")
 batchgroup.add_argument("-src","--sources",help="List of dictionary sources to extract from database.\nMust contain the sources id's from the table 'sources'.\nDefault: 27 28 29 31 32 33 36",nargs='+',type=str)
-batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\May include path.\Existing files will be deleted first.\nDefault 'DEXonline'",type=str,default="DEXonline")
+batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\nMay include path.\Existing files will be deleted first.\nDefault: 'DEXonline'",type=str,default="DEXonline")
 
 batchgroup2 = parser.add_mutually_exclusive_group()
-batchgroup2.add_argument("-k","--kindlegen",help="Run kindlegen to convert the output to MOBI.\nDefault set",action="store_false",default=True)
-batchgroup2.add_argument("-t","--temp_files",help="Delete the temporary files after running kindlegen.\nDefault set",action="store_false",default=True)
+batchgroup2.add_argument("-k","--kindlegen",help="Run kindlegen to convert the output to MOBI.\nDefault: set",action="store_false",default=True)
+batchgroup2.add_argument("-t","--temp_files",help="Delete the temporary files after running kindlegen.\nDefault: set",action="store_false",default=True)
 
 if not len(sys.argv) > 1:
 	print("To display help, run '%s -h'" % (sys.argv[0]))
