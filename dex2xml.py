@@ -479,7 +479,7 @@ batchgroup.add_argument("-u","--username",help="Specify the username to connect 
 batchgroup.add_argument("-passwd","--password",help="The password of the mysql server.",type=str)
 batchgroup.add_argument("-d","--database",help="DEX database on the mysql server.\nDefault: 'DEX'",type=str,default="DEX")
 batchgroup.add_argument("-src","--sources",help="List of dictionary sources to extract from database.\nMust contain the sources id's from the table 'sources'.\nDefault: 27 28 29 31 32 33 36",nargs='+',type=str)
-batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\nMay include path.\Existing files will be deleted first.\nDefault: 'DEXonline'",type=str,default="DEXonline")
+batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\nMay include path.\nExisting files will be deleted first.\nDefault: 'DEXonline'",type=str,default="DEXonline")
 
 batchgroup2 = parser.add_mutually_exclusive_group()
 batchgroup2.add_argument("-k","--kindlegen",help="Run kindlegen to convert the output to MOBI.\nDefault: set",action="store_false",default=True)
