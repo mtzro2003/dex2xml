@@ -101,6 +101,7 @@ conn =''
 cur = ''
 cur2 = ''
 to = ''
+diacritics = 'comma'
 
 OPFTEMPLATEHEAD = u"""<?xml version="1.0" encoding="utf-8"?>
 <package unique-identifier="uid">
@@ -112,6 +113,8 @@ OPFTEMPLATEHEAD = u"""<?xml version="1.0" encoding="utf-8"?>
 			<dc:Language>ro</dc:Language>
 			<dc:Creator>dex2xml</dc:Creator>
 			<dc:Description>DEX online</dc:Description>
+			<dc:Source>http://dexonline.ro</dc:Source>
+			<dc:Type>dictionary</dc:Type>
 			<dc:Date>%s</dc:Date>
 	</dc-metadata>
 	<x-metadata>
@@ -244,38 +247,38 @@ def isWithComma(termen):
 	else:
 		return False
 
+def printInflections(inflections):
+	if len(inflections)>0:
+		to.write(IDXINFTEMPLATEHEAD)
+		for inflection in inflections:
+			to.write(IDXINFVALUETEMPLATE % inflection)
+		to.write(IDXINFTEMPLATEEND)
 
-def printInflection(termen):
-	global to
-	
-	to.write(IDXINFVALUETEMPLATE % termen)
-
-def printInflections(iddef):
-	global to
+def inflectionsList(iddef):
+	global diacritics
 	global cur2
+	inflections = []
 	
-	to.write(IDXINFTEMPLATEHEAD)
-	
-	cur2.execute("select distinct formUtf8General from Definition d join LexemDefinitionMap ldm on ldm.definitionid = d.id join LexemModel lm on lm.lexemid = ldm.lexemId join InflectedForm inf on inf.lexemModelId = lm.id where d.id = %s" % iddef)
+	cur2.execute("select distinct formUtf8General as inflection from Definition d join LexemDefinitionMap ldm on ldm.definitionid = d.id join LexemModel lm on lm.lexemid = ldm.lexemId join InflectedForm inf on inf.lexemModelId = lm.id where d.id = %s" % iddef)
 	
 	if cur2.rowcount>0:
 		for i in range(cur2.rowcount):
 			inf = cur2.fetchone()
-			inflection = inf["formUtf8General"]
-			if inflection:
-				printInflection(replaceWithCedilla(inflection))
-				# if the inflected form contains comma it will export the same form written with cedilla
-				if isWithComma(inflection):
-					printInflection(replaceWithCedilla(inflection))
-
-
-	to.write(IDXINFTEMPLATEEND)
+			inflection = inf["inflection"]
+			if isWithComma(inflection):
+				if (diacritics == 'cedilla') or (diacritics == 'both'):
+					inflections.append(replaceWithCedilla(inflection))
+				if (diacritics == 'comma') or (diacritics == 'both'):
+					inflections.append(inflection)
+			else:
+				inflections.append(inflection)
+	return inflections
 
 def printTerm(iddef,termen,definition,source):
 	global to
 	
 	to.write(IDXTEMPLATEHEAD % (termen))
-	printInflections(iddef)
+	printInflections(inflectionsList(iddef))
 	to.write(IDXTEMPLATEEND % (definition,source))
 
 def deleteFile(filename):
@@ -325,6 +328,7 @@ def tryConnect():
 def exportDictionaryFiles():
 	global to
 	global cur
+	global diacritics
 	
 	start_time = time.time()
 	cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
@@ -361,12 +365,16 @@ def exportDictionaryFiles():
 				manifest = manifest + '\t\t<item id="' + letter + '" href="' + to.name + '" media-type="text/x-oeb1-document"/>\n'
 				spine = spine + '\t\t<itemref idref="' + letter + '"/>\n'
 				toc = toc + '\n\t\t\t\t\t\t<li><a href="' + to.name + '">' + letter + '</a></li>'
-		sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
 		
-		printTerm(did,dterm,ddef,dsrc)
+		sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
 		#if the term contains comma it will export the term again but written with cedilla
 		if isWithComma(dterm):
-			printTerm(did,replaceWithCedilla(dterm),ddef,dsrc)
+			if (diacritics == 'cedilla') or (diacritics == 'both'):
+				printTerm(did,replaceWithCedilla(dterm),ddef,dsrc)
+			if (diacritics == 'comma') or (diacritics == 'both'):
+				printTerm(did,dterm,ddef,dsrc)
+		else:
+			printTerm(did,dterm,ddef,dsrc)
 	
 	end_time = time.time()
 	print("\nExport time: %s" % time.strftime('%H:%M:%S',time.gmtime((end_time - start_time))))
