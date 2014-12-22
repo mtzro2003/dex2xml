@@ -28,6 +28,9 @@
 # 
 # Version history:
 # ----------------
+#     0.9.1
+#         added parameter to select how the diacritics should be exported (comma, cedilla, both)
+# 
 #     0.9.0
 #         output file compliant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
 #         added TOC
@@ -68,7 +71,7 @@
 # Boston, MA 02111-1307, USA.
 
 # VERSION
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 
 import sys
 import re
@@ -101,7 +104,7 @@ conn =''
 cur = ''
 cur2 = ''
 to = ''
-diacritics = 'comma'
+diacritics = ''
 
 OPFTEMPLATEHEAD = u"""<?xml version="1.0" encoding="utf-8"?>
 <package unique-identifier="uid">
@@ -331,7 +334,7 @@ def exportDictionaryFiles():
 	global diacritics
 	
 	start_time = time.time()
-	cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon" % ','.join(source_list))
+	cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon asc, s.id desc" % ','.join(source_list))
 	
 	if cur.rowcount == 0:
 		print("Managed to retrieve 0 definitions from dictionary...\nSomething was wrong...")
@@ -489,6 +492,8 @@ def interactiveMode():
 	
 	name = raw_input("\nEnter the filename of the generated dictionary file.\nExisting files will be deleted.\nMay include path [default: '%s']: " % "DEXonline") or "DEXonline"
 	print("Using '%s'" % name)
+	diacritics = (raw_input("\nSpecify how the diacritics should be exported [comma/cedilla/BOTH]: ") or "both").lower()
+	print("Diacritics will be exported using '%s'" % diacritics.upper())
 	
 	tryConnect()
 	
@@ -521,7 +526,7 @@ def interactiveMode():
 ################################################################
 
 parser = argparse.ArgumentParser(add_help=False,formatter_class=RawTextHelpFormatter)
-group = parser.add_mutually_exclusive_group()
+group = parser.add_mutually_exclusive_group(required=True)
 group.add_argument("-i","--interactive",help="run the program in interactive mode",action="store_true")
 group.add_argument("-b","--batch",help="run the program in batch mode, taking parameters from command line",action="store_true")
 group.add_argument("-h","--help",help="print this help file",action="help")
@@ -535,18 +540,13 @@ batchgroup.add_argument("-passwd","--password",help="The password of the mysql s
 batchgroup.add_argument("-d","--database",help="DEX database on the mysql server.\nDefault: 'DEX'",type=str,default="DEX")
 batchgroup.add_argument("-src","--sources",help="List of dictionary sources to extract from database.\nMust contain the sources id's from the table 'sources'.\nDefault: 27 28 29 31 32 33 36",nargs='+',type=str)
 batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\nMay include path.\nExisting files will be deleted first.\nDefault: 'DEXonline'",type=str,default="DEXonline")
+batchgroup.add_argument("--diacritics",help="Specify how the diacritics should be exported.\nDefault: 'both'",choices=['comma','cedilla','both'],type=str,default="both")
 
-batchgroup2 = parser.add_mutually_exclusive_group()
-batchgroup2.add_argument("-k","--kindlegen",help="Run kindlegen to convert the output to MOBI.\nDefault: set",action="store_false",default=True)
-batchgroup2.add_argument("-t","--temp_files",help="Delete the temporary files after running kindlegen.\nDefault: set",action="store_false",default=True)
+batchgroup2 = batchgroup.add_mutually_exclusive_group()
+batchgroup2.add_argument("-k","--kindlegen",help="Do not run kindlegen to convert the output to MOBI.\nDefault: not set",action="store_false",default=True)
+batchgroup2.add_argument("-t","--temp_files",help="Keep the temporary files after running kindlegen.\nDefault: not set",action="store_false",default=True)
 
 args = parser.parse_args()
-
-if not len(sys.argv) > 1:
-	#print("To display help, run '%s -h'" % (sys.argv[0]))
-	#sys.exit()
-	print("\nNo parameters specified, running in 'interactive' mode.\nTo see the program usage run '%s -h'\n" % sys.argv[0])
-	args.interactive = True
 
 if args.interactive:
 	interactiveMode()

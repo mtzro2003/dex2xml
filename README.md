@@ -26,25 +26,18 @@ optional:
 Usage:
 ------
 
-    dex2xml.py [-i | -b | -h | -v] [-s SERVER] [-p PORT] [-u USERNAME]
+    dex2xml.py (-i | -b | -h | -v) [-s SERVER] [-p PORT] [-u USERNAME]
                 [-passwd PASSWORD] [-d DATABASE]
-                [-src SOURCES [SOURCES ...]] [-o OUTPUTFILE] [-k | -t]
-
+                [-src SOURCES [SOURCES ...]] [-o OUTPUTFILE]
+                [--diacritics {comma,cedilla,both}] [-k | -t]
 
     optional arguments:
-
     -i, --interactive     run the program in interactive mode
     -b, --batch           run the program in batch mode, taking parameters from command line
     -h, --help            print this help file
     -v, --version         print the program's version
-    -k, --kindlegen       Run kindlegen to convert the output to MOBI.
-                          Default: set
-    -t, --temp_files      Delete the temporary files after running kindlegen.
-                          Default: set
-
 
     Batch arguments:
-
     -s SERVER, --server SERVER
                         Specify the mysql server to connect to.
                         Default: 'localhost'
@@ -67,9 +60,19 @@ Usage:
                         May include path.
                         Existing files will be deleted first.
                         Default: 'DEXonline'
+    --diacritics {comma,cedilla,both}
+                        Specify how the diacritics should be exported.
+                        Default: 'both'
+    -k, --kindlegen     Do not run kindlegen to convert the output to MOBI.
+                        Default: not set
+    -t, --temp_files    Keep the temporary files after running kindlegen.
+                        Default: not set
 
 Version history:
 ----------------
+    0.9.1
+        added parameter to select how the diacritics should be exported (comma, cedilla, both)
+
     0.9.0
         output file compliant with EPUB Publications 3.0 (http://www.idpf.org/epub/30/spec/epub30-publications.html)
         added TOC
