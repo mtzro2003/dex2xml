@@ -105,7 +105,6 @@ conn =''
 cur = ''
 cur2 = ''
 to = ''
-diacritics = ''
 
 OPFTEMPLATEHEAD = u"""<?xml version="1.0" encoding="utf-8"?>
 <package unique-identifier="uid">
@@ -259,7 +258,6 @@ def printInflections(inflections):
 		to.write(IDXINFTEMPLATEEND)
 
 def inflectionsList(iddef):
-	global diacritics
 	global cur2
 	inflections = []
 	
@@ -270,9 +268,9 @@ def inflectionsList(iddef):
 			inf = cur2.fetchone()
 			inflection = inf["inflection"]
 			if isWithComma(inflection):
-				if (diacritics == 'cedilla') or (diacritics == 'both'):
+				if (args.diacritics == 'cedilla') or (args.diacritics == 'both'):
 					inflections.append(replaceWithCedilla(inflection))
-				if (diacritics == 'comma') or (diacritics == 'both'):
+				if (args.diacritics == 'comma') or (args.diacritics == 'both'):
 					inflections.append(inflection)
 			else:
 				inflections.append(inflection)
@@ -332,7 +330,6 @@ def tryConnect():
 def exportDictionaryFiles():
 	global to
 	global cur
-	global diacritics
 	
 	start_time = time.time()
 	cur.execute("select d.id,lexicon,replace(htmlRep,'\n','') as htmlRep, concat(s.name,' ',s.year) as source from Definition d join Source s on d.sourceId = s.id where s.id in (%s) and lexicon <>'' and status = 0 order by lexicon asc, s.id desc" % ','.join(source_list))
@@ -373,9 +370,9 @@ def exportDictionaryFiles():
 		sys.stdout.write("\rExporting %s of %s..." % (i+1,cur.rowcount))
 		#if the term contains comma it will export the term again but written with cedilla
 		if isWithComma(dterm):
-			if (diacritics == 'cedilla') or (diacritics == 'both'):
+			if (args.diacritics == 'cedilla') or (args.diacritics == 'both'):
 				printTerm(did,replaceWithCedilla(dterm),ddef,dsrc)
-			if (diacritics == 'comma') or (diacritics == 'both'):
+			if (args.diacritics == 'comma') or (args.diacritics == 'both'):
 				printTerm(did,dterm,ddef,dsrc)
 		else:
 			printTerm(did,dterm,ddef,dsrc)
