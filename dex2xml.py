@@ -91,8 +91,9 @@ import subprocess
 import argparse
 from argparse import RawTextHelpFormatter
 
-source_list = ["27","28","29","31","32","33","36"]
+source_list = ["27","36"]
 source_list_names = []
+source_list_count = []
 
 mysql_server = ''
 mysql_port = ''
@@ -222,7 +223,7 @@ STATSTEMPLATEHEAD = u"""<html xmlns:math="http://exslt.org/math" xmlns:svg="http
 """
 
 STATSVALUETEMPLATE = u"""
-			<li><b>%s</b></li>"""
+			<li><b>%s - %s</b></li>"""
 
 STATSTEMPLATEEND = u"""
 		</ul>
@@ -304,7 +305,7 @@ def deleteTemporaryFiles():
 	response = 'n'
 	if args.interactive:
 		response = raw_input("\nDo you want to delete the temporary files (%s*.html and %s.opf) [Y/n]?: " % (name,name)).lower() or 'y'
-	if (args.interactive) or (args.temp_files) or ((response == 'y') or (response == 'yes')):
+	if (args.temp_files) or ((response == 'y') or (response == 'yes')):
 		deleteFiles(name, mobi = False)
 		print("Done removing files.")
 
@@ -442,26 +443,32 @@ def printSources():
 	global cur
 	global source_list
 	global source_list_names
+	global source_list_count
 	
+	source_list_count = []
 	source_list_names = []
-	cur.execute("select id,concat(name,' ',year) as source from Source where id in (%s) order by id" % ','.join(source_list))
+	cur.execute("select id,concat(name,' ',year) as source, (select count(lexicon) from Definition d where d.status = 0 and d.sourceId = s.id) as defcount from Source s where id in (%s) and canDistribute = 1 order by id" % ','.join(source_list))
 	print("\nSources of dictionaries for export:\n")
 	for i in range(cur.rowcount):
 		src = cur.fetchone()
+		srcid = src["id"]
 		srcname = src["source"]
-		print("%s" % srcname.encode("utf-8"))
+		srccount = src["defcount"]
+		print('id:%s defcount:%s name:"%s"'% (srcid,srccount,srcname.encode("utf-8")))
 		source_list_names.append(srcname)
+		source_list_count.append(srccount)
 	print('\n')
 
 def generateStats(filemask,nrdef):
 	global source_list_names
+	global source_list_count
 	
 	stats = codecs.open(filemask + "_STATS.html","w","utf-8")
 	stats.write(STATSTEMPLATEHEAD % nrdef)
 	
 	for src in source_list_names:
-		stats.write(STATSVALUETEMPLATE % src)
-	
+		stats.write(STATSVALUETEMPLATE % (source_list_count[source_list_names.index(src)],src))
+		
 	stats.write(STATSTEMPLATEEND % time.strftime("%d/%m/%Y"))
 	stats.close
 
@@ -473,6 +480,8 @@ def interactiveMode():
 	global mysql_db
 	global name
 	global source_list
+	global source_list_names
+	global source_list_count
 	global to 
 	
 	mysql_server = raw_input('Enter the name/ip of the MySQL server [default: %s]: ' % 'localhost') or 'localhost'
@@ -502,20 +511,20 @@ def interactiveMode():
 	response = raw_input("Do you want to change the default sources list ? [y/N]: ").lower()
 	if (response == 'y') or (response == 'yes'):
 		source_list = []
-		cur.execute("select id,concat(name,' ',year) as source from source order by id")
+		source_list_names = []
+		source_list_count = []
+		cur.execute("select id,concat(name,' ',year) as source,(select count(lexicon) from Definition d where d.status = 0 and d.sourceId = s.id) as defcount from Source s where canDistribute = 1 order by id")
 		for i in range(cur.rowcount):
 			src = cur.fetchone()
-			response = raw_input('\nUse as a source (%s of %s) %s ? [y/N]: ' % (i+1,cur.rowcount-1,src["source"].encode("utf-8"))).lower()
+			response = raw_input('\nUse as a source (%s of %s) %s ? [y/N]: ' % (i+1,cur.rowcount,src["source"].encode("utf-8"))).lower()
 			if (response == 'y') or (response == 'yes'):
-				source_list.append(str(src["id"]))
-		print(source_list)
-		print("\nSelected sources of dictionaries for export:\n")
-		cur.execute("select id,concat(name,' ',year) as source from source where id in (%s) order by id" % ','.join(source_list))
-		for i in range(cur.rowcount):
-			src = cur.fetchone()
-			print("%s\n" % src["source"].encode("utf-8"))
-		cur.close()
-		
+				srcid = src["id"]
+				srcname = src["source"]
+				srccount = src["defcount"]
+				source_list.append(str(srcid))
+				source_list_names.append(srcname)
+				source_list_count.append(srccount)
+			
 		response = raw_input("Continue [Y/n]: ").lower()
 		if (response == 'n') or (response == 'no'):
 			sys.exit()
@@ -538,7 +547,7 @@ batchgroup.add_argument("-p","--port",help="Mysql server port.\nDefault: 3306",t
 batchgroup.add_argument("-u","--username",help="Specify the username to connect to mysql server.\nDefault: 'root'",type=str,default="root")
 batchgroup.add_argument("-passwd","--password",help="The password of the mysql server.",type=str)
 batchgroup.add_argument("-d","--database",help="DEX database on the mysql server.\nDefault: 'DEX'",type=str,default="DEX")
-batchgroup.add_argument("-src","--sources",help="List of dictionary sources to extract from database.\nMust contain the sources id's from the table 'sources'.\nDefault: 27 28 29 31 32 33 36",nargs='+',type=str)
+batchgroup.add_argument("-src","--sources",help="List of dictionary sources to extract from database.\nMust contain the sources id's from the table 'sources'.\nIf some source doesn't exist or can't be distributed, it will be removed from the list.\nDefault: 27 36",nargs='+',type=str)
 batchgroup.add_argument("-o","--outputfile",help="Filename of output file.\nMay include path.\nExisting files will be deleted first.\nDefault: 'DEXonline'",type=str,default="DEXonline")
 batchgroup.add_argument("--diacritics",help="Specify how the diacritics should be exported.\nDefault: 'both'",choices=['comma','cedilla','both'],type=str,default="both")
 
@@ -549,6 +558,8 @@ batchgroup2.add_argument("-t","--temp_files",help="Keep the temporary files afte
 args = parser.parse_args()
 
 if args.interactive:
+	args.kindlegen = False
+	args.temp_files = False
 	interactiveMode()
 else:
 	mysql_server = args.server

@@ -54,7 +54,8 @@ Usage:
     -src SOURCES [SOURCES ...], --sources SOURCES [SOURCES ...]
                         List of dictionary sources to extract from database.
                         Must contain the sources id's from the table 'sources'.
-                        Default: 27 28 29 31 32 33 36
+                        If some source doesn't exist or can't be distributed, it will be removed from the list.
+                        Default: 27 36
     -o OUTPUTFILE, --outputfile OUTPUTFILE
                         Filename of output file.
                         May include path.
