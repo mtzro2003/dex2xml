@@ -74,6 +74,7 @@
 VERSION = "0.9.1"
 
 import sys
+import signal
 import re
 import os
 import time
@@ -230,6 +231,19 @@ STATSTEMPLATEEND = u"""
 		<h4 style="text-align:center">Generat: %s</h4>
 	</body>
 </html>"""
+
+def signal_handler(signal, frame):
+	global name
+	global to
+	
+	print('\n\nExport aborted!')
+	if name:
+		response = raw_input("Do you want to delete the temporary files (%s*.html)? [Y/n]: " % name).lower()
+		if (response == 'y') or (response == 'yes'):
+			if to:
+					to.close()
+			deleteFiles(name, mobi = True)
+	sys.exit(0)
 
 def replaceWithCedilla(termen):
 	findreplace = [
@@ -530,6 +544,8 @@ def interactiveMode():
 ################################################################
 # MAIN
 ################################################################
+
+signal.signal(signal.SIGINT, signal_handler)
 
 parser = argparse.ArgumentParser(add_help=False,formatter_class=RawTextHelpFormatter)
 group = parser.add_mutually_exclusive_group(required=True)
